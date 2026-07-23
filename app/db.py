@@ -9,12 +9,23 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import get_settings
 
-
 class Base(DeclarativeBase):
     """Declarative base class for all ORM models."""
 
 
-_engine = create_engine(get_settings().database_url, pool_pre_ping=True)
+# _engine = create_engine(get_settings().database_url, pool_pre_ping=True)
+database_url = get_settings().database_url
+
+connect_args = {}
+if database_url.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+
+_engine = create_engine(
+    database_url,
+    pool_pre_ping=True,
+    connect_args=connect_args,
+)
+
 SessionLocal = sessionmaker(bind=_engine, autoflush=False, autocommit=False)
 
 

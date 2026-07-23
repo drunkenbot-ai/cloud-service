@@ -40,3 +40,12 @@ def health() -> dict[str, str]:
     """
 
     return {"status": "ok"}
+
+
+@app.get("/")
+def root():
+    return {
+        "message": "DrunkenBot-Cloud Service API is running",
+        "docs": "/docs",
+        "health": "/health",
+    }

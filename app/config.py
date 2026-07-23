@@ -21,13 +21,14 @@ class Settings(BaseSettings):
             the public validation endpoints.
     """
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=r"E:\AI_Projects\cloud-service\.env", env_file_encoding="utf-8", extra="ignore")
 
     database_url: str
     signing_private_key_b64: str
     admin_api_token: str
     grace_receipt_valid_hours: int = 168
-    rate_limit_per_minute: int = 30
+    rate_limit_per_minute: int = 30,
+
 
 
 @lru_cache
