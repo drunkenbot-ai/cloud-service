@@ -12,7 +12,6 @@ from app.config import get_settings
 class Base(DeclarativeBase):
     """Declarative base class for all ORM models."""
 
-
 # _engine = create_engine(get_settings().database_url, pool_pre_ping=True)
 database_url = get_settings().database_url
 
