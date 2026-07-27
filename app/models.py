@@ -60,9 +60,13 @@ class License(Base):
     """A permanent, per-version IDE license.
 
     Attributes:
-        license_key: Short customer-facing identifier (what they actually
-            type/paste into the IDE's activation dialog). Distinct from the
-            signed payload issued after validation.
+        license_key_hash: SHA-256 hash of the plaintext license key used for
+            lookup at validation time. The plaintext itself is never
+            stored -- shown to the admin exactly once, at creation, the
+            same principle as ApiKey.key_hash.
+        license_key_prefix: First few characters of the plaintext key, kept
+            only for display in the admin UI/logs so a license can be
+            recognized without ever storing or logging the full value.
         version_ceiling: Highest app version this license entitles the
             holder to run, compared against the running app's version at
             validation time.
@@ -75,7 +79,8 @@ class License(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
     account_id: Mapped[str] = mapped_column(ForeignKey("accounts.id"), index=True)
-    license_key: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    license_key_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    license_key_prefix: Mapped[str] = mapped_column(String(20))
     product: Mapped[str] = mapped_column(String(50), default="LLM-IDE")
     version_ceiling: Mapped[str] = mapped_column(String(50))
     grace_period_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -111,6 +116,107 @@ class ApiKey(Base):
     last_used_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     account: Mapped["Account"] = relationship(back_populates="api_keys")
+
+
+class NotificationSettings(Base):
+    """Singleton row holding alert-channel configuration.
+
+    Superadmin-only to view or edit (see app/admin_ui/router.py). Secret
+    fields (*_encrypted) are encrypted at rest via app/crypto_secrets.py --
+    genuine encryption, not hashing, since these need to be retrieved in
+    plaintext to actually send notifications later.
+
+    A single fixed row (id="singleton") rather than a general key-value
+    settings table: there is exactly one global notification
+    configuration for now, and a dedicated table with named columns is
+    simpler to reason about and migrate than a generic settings blob.
+    """
+
+    __tablename__ = "notification_settings"
+
+    id: Mapped[str] = mapped_column(String(20), primary_key=True, default=lambda: "singleton")
+
+    email_enabled: Mapped[bool] = mapped_column(default=False)
+    gmail_address: Mapped[Optional[str]] = mapped_column(String(320), nullable=True)
+    gmail_app_password_encrypted: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    recipient_email: Mapped[Optional[str]] = mapped_column(String(320), nullable=True)
+
+    telegram_enabled: Mapped[bool] = mapped_column(default=False)
+    telegram_bot_token_encrypted: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    telegram_chat_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+    discord_enabled: Mapped[bool] = mapped_column(default=False)
+    discord_webhook_url_encrypted: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Per-event-category toggles, so noisy categories can be silenced
+    # without disabling every channel entirely.
+    notify_account_created: Mapped[bool] = mapped_column(default=True)
+    notify_account_status_changed: Mapped[bool] = mapped_column(default=True)
+    notify_license_created: Mapped[bool] = mapped_column(default=True)
+    notify_license_revoked: Mapped[bool] = mapped_column(default=True)
+    notify_license_extended: Mapped[bool] = mapped_column(default=True)
+
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now, onupdate=_utc_now)
+    updated_by_admin_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+
+
+class AdminUser(Base):
+    """A person with login access to the admin web UI.
+
+    Attributes:
+        role: One of "readonly", "full", or "superadmin". Ranked in that
+            order -- see app/admin_ui/router.py's _ROLE_RANK. "full" covers
+            everything today's single-shared-token admin could do (manage
+            customer accounts/licenses/API keys); "superadmin" additionally
+            covers managing OTHER admin users. Deliberately split: being
+            trusted to manage customers is not the same as being trusted to
+            grant other people admin access.
+        created_by_admin_id: Which admin created this one, for
+            accountability. Null for the first (bootstrap) superadmin.
+    """
+
+    __tablename__ = "admin_users"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(200))
+    role: Mapped[str] = mapped_column(String(20), default="readonly")
+    # "active" or "disabled".
+    status: Mapped[str] = mapped_column(String(20), default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now)
+    created_by_admin_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class LaunchEvent(Base):
+    """One IDE launch's telemetry, recorded alongside license validation.
+
+    Kept separate from ``AuditLog`` deliberately: this is usage-analytics
+    volume (every launch, of every install), not security-audit volume
+    (validation attempts and admin actions). Mixing them would make the
+    audit log noisy and slow to query for its actual purpose.
+
+    ``ip_country``/``isp`` are left nullable and unpopulated by the
+    validation endpoint itself -- resolving IP geolocation synchronously on
+    every license check would add a third-party network dependency to the
+    single most latency- and reliability-sensitive endpoint in the service.
+    Enrich these later via a batch job reading raw ``ip_address`` values
+    instead.
+    """
+
+    __tablename__ = "launch_events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    account_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
+    license_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
+    machine_id: Mapped[str] = mapped_column(String(100), index=True)
+    os: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    os_version: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    app_version: Mapped[str] = mapped_column(String(50))
+    ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
+    ip_country: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    isp: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now, index=True)
 
 
 class AuditLog(Base):

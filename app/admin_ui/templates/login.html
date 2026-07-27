@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Log in - DrunkenBot Admin</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #14161a; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+  .box { background: #fff; padding: 32px; border-radius: 10px; width: 320px; }
+  .box h1 { font-size: 18px; margin-top: 0; }
+  input { width: 100%; padding: 8px 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+  button { width: 100%; padding: 10px; background: #2451ff; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+  .error { color: #a02020; font-size: 13px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>DrunkenBot Admin</h1>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form method="post" action="/admin-ui/login">
+    <input type="hidden" name="next" value="{{ next }}">
+    <input type="email" name="email" placeholder="you@drunkenbot.ai" autofocus required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit">Log in</button>
+  </form>
+</div>
+</body>
+</html>

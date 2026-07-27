@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Notification Settings - DrunkenBot Admin{% endblock %}
+{% block content %}
+{% if saved %}<div class="secret-box" style="background:#e3f7e8; border-color:#8fd3a3;">Settings saved.</div>{% endif %}
+{% if test_result %}<div class="secret-box" style="background:#eef2ff; border-color:#c3cdf5;">{{ test_result }}</div>{% endif %}
+
+<div class="card">
+  <h2>Alert events</h2>
+  <p class="muted">Choose which lifecycle events trigger a notification across every enabled channel below.</p>
+  <form method="post" action="/admin-ui/settings" id="settings-form">
+    <div class="row" style="margin-bottom:16px;">
+      <label><input type="checkbox" name="notify_account_created" {% if settings.notify_account_created %}checked{% endif %}> Account created</label>
+      <label><input type="checkbox" name="notify_account_status_changed" {% if settings.notify_account_status_changed %}checked{% endif %}> Account suspended/reactivated</label>
+      <label><input type="checkbox" name="notify_license_created" {% if settings.notify_license_created %}checked{% endif %}> License generated</label>
+      <label><input type="checkbox" name="notify_license_revoked" {% if settings.notify_license_revoked %}checked{% endif %}> License revoked</label>
+      <label><input type="checkbox" name="notify_license_extended" {% if settings.notify_license_extended %}checked{% endif %}> Grace period / free upgrade granted</label>
+    </div>
+
+    <h2>Email (Gmail)</h2>
+    <div class="row" style="margin-bottom:8px;">
+      <label><input type="checkbox" name="email_enabled" {% if settings.email_enabled %}checked{% endif %}> Enabled</label>
+    </div>
+    <div class="row" style="margin-bottom:16px;">
+      <input type="email" name="gmail_address" placeholder="sender@gmail.com" value="{{ settings.gmail_address or '' }}">
+      <input type="password" name="gmail_app_password" placeholder="{{ 'App password saved (leave blank to keep)' if settings.gmail_app_password_encrypted else 'Gmail app password' }}">
+      <input type="email" name="recipient_email" placeholder="alerts go to..." value="{{ settings.recipient_email or 'drunken.bot.contact@gmail.com' }}">
+    </div>
+    <p class="muted" style="margin-top:-8px;">
+      Use a Gmail <a href="https://myaccount.google.com/apppasswords" target="_blank">app password</a>, not your real account password.
+    </p>
+
+    <h2>Telegram</h2>
+    <div class="row" style="margin-bottom:8px;">
+      <label><input type="checkbox" name="telegram_enabled" {% if settings.telegram_enabled %}checked{% endif %}> Enabled</label>
+    </div>
+    <div class="row" style="margin-bottom:16px;">
+      <input type="password" name="telegram_bot_token" placeholder="{{ 'Bot token saved (leave blank to keep)' if settings.telegram_bot_token_encrypted else 'Bot token from @BotFather' }}">
+      <input type="text" name="telegram_chat_id" placeholder="Chat ID" value="{{ settings.telegram_chat_id or '' }}">
+    </div>
+
+    <h2>Discord</h2>
+    <div class="row" style="margin-bottom:8px;">
+      <label><input type="checkbox" name="discord_enabled" {% if settings.discord_enabled %}checked{% endif %}> Enabled</label>
+    </div>
+    <div class="row" style="margin-bottom:16px;">
+      <input type="password" name="discord_webhook_url" placeholder="{{ 'Webhook saved (leave blank to keep)' if settings.discord_webhook_url_encrypted else 'Discord webhook URL' }}" style="width:400px;">
+    </div>
+
+    <button type="submit">Save settings</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Test a channel</h2>
+  <p class="muted">Sends a real test message through the selected channel using the currently saved settings (save first if you just changed anything).</p>
+  <div class="row">
+    <form method="post" action="/admin-ui/settings/test/email" class="inline"><button type="submit" class="secondary">Send test email</button></form>
+    <form method="post" action="/admin-ui/settings/test/telegram" class="inline"><button type="submit" class="secondary">Send test Telegram message</button></form>
+    <form method="post" action="/admin-ui/settings/test/discord" class="inline"><button type="submit" class="secondary">Send test Discord message</button></form>
+  </div>
+</div>
+{% endblock %}

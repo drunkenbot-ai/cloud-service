@@ -45,6 +45,18 @@ def validate_license(
     client_ip = request.client.host if request.client else None
     license_row = crud.get_license_by_key(db, payload.license_key)
 
+    if payload.telemetry is not None:
+        crud.record_launch_event(
+            db,
+            machine_id=payload.telemetry.machine_id,
+            app_version=payload.app_version,
+            account_id=license_row.account_id if license_row else None,
+            license_id=license_row.id if license_row else None,
+            os=payload.telemetry.os,
+            os_version=payload.telemetry.os_version,
+            ip_address=client_ip,
+        )
+
     if license_row is None:
         record_event(db, "license.validate", "failure", detail={"reason": "not_found"}, ip_address=client_ip)
         return LicenseValidateResponse(valid=False, reason="License key not found.")

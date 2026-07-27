@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app import crud
 from app.audit import record_event
+from app.notifications import notify_event
 from app.db import get_db
 from app.models import Account, ApiKey, License
 from app.schemas import (
@@ -62,6 +63,7 @@ def create_account(payload: AccountCreateRequest, db: Session = Depends(get_db))
 
     account = crud.create_account(db, str(payload.email), payload.company_name, payload.notes)
     record_event(db, "admin.account.create", "success", account_id=account.id)
+    notify_event(db, "account_created", f"Account created: {account.email}", {"company": payload.company_name or "-"})
     return account
 
 
@@ -78,12 +80,20 @@ def create_license(payload: LicenseCreateRequest, db: Session = Depends(get_db))
         this once.
     """
 
-    _get_account_or_404(db, payload.account_id)
-    license_row = crud.create_license(db, payload.account_id, payload.version_ceiling, payload.grace_period_until)
+    account = _get_account_or_404(db, payload.account_id)
+    license_row, plaintext_key = crud.create_license(
+        db, payload.account_id, payload.version_ceiling, payload.grace_period_until
+    )
     record_event(db, "admin.license.create", "success", account_id=payload.account_id, subject_id=license_row.id)
+    notify_event(
+        db,
+        "license_created",
+        f"License issued for {account.email}",
+        {"version_ceiling": payload.version_ceiling, "license_key": license_row.license_key_prefix + "..."},
+    )
     return LicenseCreateResponse(
         id=license_row.id,
-        license_key=license_row.license_key,
+        license_key=plaintext_key,
         version_ceiling=license_row.version_ceiling,
         grace_period_until=license_row.grace_period_until,
     )
@@ -103,7 +113,9 @@ def extend_license(
         db: Database session.
 
     Returns:
-        Updated license (license key is unchanged, included for reference).
+        Updated license. ``license_key`` in the response is the masked
+        prefix, not the full key -- the plaintext is never retrievable
+        after creation (see ``License.license_key_hash``).
 
     Raises:
         HTTPException: 404 if the license does not exist.
@@ -121,9 +133,16 @@ def extend_license(
         subject_id=license_row.id,
         detail=payload.model_dump(mode="json"),
     )
+    extended_account = crud.get_account(db, license_row.account_id)
+    notify_event(
+        db,
+        "license_extended",
+        f"License extended (grace/upgrade) for {extended_account.email if extended_account else license_row.account_id}",
+        {"new_version_ceiling": license_row.version_ceiling, "license_key": license_row.license_key_prefix + "..."},
+    )
     return LicenseCreateResponse(
         id=license_row.id,
-        license_key=license_row.license_key,
+        license_key=license_row.license_key_prefix + "...",
         version_ceiling=license_row.version_ceiling,
         grace_period_until=license_row.grace_period_until,
     )
@@ -149,6 +168,13 @@ def revoke_license(license_id: str, db: Session = Depends(get_db)) -> dict[str, 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="License not found.")
     crud.revoke_license(db, license_row)
     record_event(db, "admin.license.revoke", "success", account_id=license_row.account_id, subject_id=license_id)
+    revoked_account = crud.get_account(db, license_row.account_id)
+    notify_event(
+        db,
+        "license_revoked",
+        f"License revoked for {revoked_account.email if revoked_account else license_row.account_id}",
+        {"license_key": license_row.license_key_prefix + "..."},
+    )
     return {"status": "revoked", "license_id": license_id}
 
 

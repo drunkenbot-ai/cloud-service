@@ -8,11 +8,27 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
 
 
+class LaunchTelemetry(BaseModel):
+    """Optional, privacy-conscious launch telemetry sent with a license check.
+
+    Deliberately excludes anything directly identifying (no OS username, no
+    email beyond what the license key already implies, no hostname). ISP/
+    geo information is derived server-side from the request's source IP,
+    not self-reported by the client -- both more reliable and one less
+    thing the client needs to detect about itself.
+    """
+
+    machine_id: str = Field(description="Stable, locally-generated pseudonymous ID -- not a hardware serial.")
+    os: Optional[str] = Field(default=None, description="e.g. 'Windows', 'macOS', 'Linux'.")
+    os_version: Optional[str] = None
+
+
 class LicenseValidateRequest(BaseModel):
     """Request body for ``POST /license/validate``."""
 
     license_key: str
     app_version: str = Field(description="Semantic version of the running IDE build, e.g. '2.1.0'.")
+    telemetry: Optional[LaunchTelemetry] = None
 
 
 class LicenseValidateResponse(BaseModel):

@@ -9,22 +9,23 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import get_settings
 
+
 class Base(DeclarativeBase):
     """Declarative base class for all ORM models."""
 
-# _engine = create_engine(get_settings().database_url, pool_pre_ping=True)
+
 database_url = get_settings().database_url
-
-connect_args = {}
+# SQLite disallows using a connection across threads by default. FastAPI's
+# sync (def, not async def) route handlers run in a thread pool, so without
+# this, concurrent requests against a local sqlite:// DATABASE_URL (the
+# common no-Postgres-installed local dev setup) would intermittently fail
+# with "SQLite objects created in a thread can only be used in that same
+# thread." Postgres has no such restriction, so this only applies to sqlite.
+_connect_args: dict = {}
 if database_url.startswith("sqlite"):
-    connect_args = {"check_same_thread": False}
+    _connect_args = {"check_same_thread": False}
 
-_engine = create_engine(
-    database_url,
-    pool_pre_ping=True,
-    connect_args=connect_args,
-)
-
+_engine = create_engine(database_url, pool_pre_ping=True, connect_args=_connect_args)
 SessionLocal = sessionmaker(bind=_engine, autoflush=False, autocommit=False)
 
 

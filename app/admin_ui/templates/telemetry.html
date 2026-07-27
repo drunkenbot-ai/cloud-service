@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Telemetry - DrunkenBot Admin{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Recent launches (all accounts)</h2>
+  <p class="muted">
+    Machine IDs are randomly generated per-install identifiers, not tied to
+    hardware or OS accounts. ISP/geo is not resolved here yet -- see the
+    README for the plan to enrich this from raw IP asynchronously rather
+    than on the validation hot path.
+  </p>
+  <table>
+    <tr><th>When</th><th>Account</th><th>OS</th><th>App version</th><th>Machine</th><th>IP</th></tr>
+    {% for launch in launches %}
+    <tr>
+      <td class="muted">{{ launch.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+      <td>{% if launch.account_id %}<a href="/admin-ui/accounts/{{ launch.account_id }}">{{ launch.account_id[:8] }}...</a>{% else %}unresolved{% endif %}</td>
+      <td>{{ launch.os or "-" }} {{ launch.os_version or "" }}</td>
+      <td>{{ launch.app_version }}</td>
+      <td class="muted">{{ launch.machine_id[:16] }}...</td>
+      <td class="muted">{{ launch.ip_address or "-" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="muted">No launches recorded yet.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

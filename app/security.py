@@ -10,6 +10,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import secrets
+from typing import Optional
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
@@ -57,11 +58,16 @@ def sign_payload(canonical_payload: bytes) -> str:
     return base64.b64encode(signature).decode("ascii")
 
 
-def hash_api_key(plaintext_key: str) -> str:
-    """Hash an API key for storage, the same way a password would be hashed.
+def hash_secret_key(plaintext_key: str) -> str:
+    """Hash a high-entropy secret key for storage (API key or license key).
+
+    The same principle as password hashing, but SHA-256 is sufficient here
+    (not bcrypt) because these are already high-entropy random values, not
+    human-chosen -- offline brute-forcing a random 32+ byte token is
+    infeasible regardless of hash speed, unlike a human password.
 
     Args:
-        plaintext_key: Raw API key as issued to the customer.
+        plaintext_key: Raw secret key as issued to the customer.
 
     Returns:
         Hex-encoded SHA-256 hash. The plaintext key is never stored.
@@ -91,6 +97,70 @@ def generate_license_key() -> str:
 
     groups = [secrets.token_hex(2).upper() for _ in range(4)]
     return "DBIDE-" + "-".join(groups)
+
+
+def hash_password(plaintext_password: str) -> str:
+    """Hash an admin user's password for storage.
+
+    Uses bcrypt deliberately, not the fast SHA-256 used for API keys
+    elsewhere in this file: passwords are (comparatively) low-entropy and
+    human-chosen, so hashing needs to be intentionally slow and salted to
+    resist offline brute-forcing. API keys are already high-entropy random
+    values where that concern does not apply.
+
+    Args:
+        plaintext_password: Password as entered by the user.
+
+    Returns:
+        Bcrypt hash string, safe to store.
+    """
+
+    import bcrypt
+
+    return bcrypt.hashpw(plaintext_password.encode("utf-8"), bcrypt.gensalt()).decode("ascii")
+
+
+def verify_password(plaintext_password: str, password_hash: str) -> bool:
+    """Verify a password against its stored bcrypt hash.
+
+    Args:
+        plaintext_password: Password as entered at login.
+        password_hash: Stored bcrypt hash.
+
+    Returns:
+        True if the password matches.
+    """
+
+    import bcrypt
+
+    try:
+        return bcrypt.checkpw(plaintext_password.encode("utf-8"), password_hash.encode("utf-8"))
+    except ValueError:
+        return False
+
+
+def validate_password_strength(password: str) -> Optional[str]:
+    """Check a password against the minimum bar for an admin account.
+
+    Deliberately simple (length + not-purely-numeric) rather than a strict
+    composition policy (must have a symbol, etc.) -- composition rules are
+    widely considered to push people toward predictable substitutions
+    (`Password1!`) more than they improve real security. Length is the
+    strongest lever available cheaply.
+
+    Args:
+        password: Candidate password.
+
+    Returns:
+        An error message if the password is too weak, ``None`` if it's
+        acceptable.
+    """
+
+    if len(password) < 10:
+        return "Password must be at least 10 characters."
+    if password.isdigit():
+        return "Password cannot be all digits."
+    return None
 
 
 def require_admin_token(x_admin_token: str = Header(default="")) -> None:

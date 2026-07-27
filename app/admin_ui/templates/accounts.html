@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Accounts - DrunkenBot Admin{% endblock %}
+{% block content %}
+{% if created %}<div class="secret-box">New key created: {{ created }} -- shown once, copy it now.</div>{% endif %}
+
+<div class="card">
+  <h2>Create account</h2>
+  <form method="post" action="/admin-ui/accounts" class="row">
+    <input type="email" name="email" placeholder="customer@example.com" required>
+    <input type="text" name="company_name" placeholder="Company (optional)">
+    <button type="submit">Create</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Accounts</h2>
+  <form method="get" action="/admin-ui/accounts" class="row" style="margin-bottom:12px;">
+    <input type="text" name="search" placeholder="Search email or company" value="{{ search }}">
+    <button type="submit" class="secondary">Search</button>
+  </form>
+  <table>
+    <tr><th>Email</th><th>Company</th><th>Status</th><th>Created</th><th></th></tr>
+    {% for account in accounts %}
+    <tr>
+      <td>{{ account.email }}</td>
+      <td>{{ account.company_name or "-" }}</td>
+      <td><span class="pill pill-{{ account.status }}">{{ account.status }}</span></td>
+      <td class="muted">{{ account.created_at.strftime("%Y-%m-%d") }}</td>
+      <td><a href="/admin-ui/accounts/{{ account.id }}">Manage &rarr;</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">No accounts yet.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

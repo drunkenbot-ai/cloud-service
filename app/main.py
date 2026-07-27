@@ -9,7 +9,10 @@ any real deployment -- this app itself speaks plain HTTP only.
 from __future__ import annotations
 
 from fastapi import FastAPI
+from starlette.middleware.sessions import SessionMiddleware
 
+from app.admin_ui.router import router as admin_ui_router
+from app.config import get_settings
 from app.db import init_db
 from app.routers import admin, auth, license
 
@@ -19,9 +22,12 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.add_middleware(SessionMiddleware, secret_key=get_settings().session_secret_key, same_site="lax")
+
 app.include_router(license.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
+app.include_router(admin_ui_router)
 
 
 @app.on_event("startup")
@@ -29,6 +35,21 @@ def on_startup() -> None:
     """Ensure database tables exist before serving requests."""
 
     init_db()
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    """Basic status/landing response for anyone hitting the bare host.
+
+    Returns:
+        Status payload pointing at the docs and health check.
+    """
+
+    return {
+        "message": "DrunkenBot Cloud Service API is running",
+        "docs": "/docs",
+        "health": "/health",
+    }
 
 
 @app.get("/health")
@@ -40,12 +61,3 @@ def health() -> dict[str, str]:
     """
 
     return {"status": "ok"}
-
-
-@app.get("/")
-def root():
-    return {
-        "message": "DrunkenBot-Cloud Service API is running",
-        "docs": "/docs",
-        "health": "/health",
-    }

@@ -7,7 +7,5 @@ venv/
 .pytest_cache/
 keys/
 *.sqlite3
-.DS_Store
-*.idea/
-*.env
 *.db
+.DS_Store

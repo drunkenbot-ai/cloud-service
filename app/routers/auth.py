@@ -12,7 +12,7 @@ from app.audit import record_event
 from app.db import get_db
 from app.rate_limit import enforce_rate_limit
 from app.schemas import ApiKeyValidateResponse
-from app.security import hash_api_key
+from app.security import hash_secret_key
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -43,7 +43,7 @@ def validate_api_key(
         return ApiKeyValidateResponse(valid=False, reason="Missing or malformed Authorization header.")
 
     plaintext_key = authorization.removeprefix("Bearer ").strip()
-    key_row = crud.get_api_key_by_hash(db, hash_api_key(plaintext_key))
+    key_row = crud.get_api_key_by_hash(db, hash_secret_key(plaintext_key))
 
     if key_row is None:
         record_event(db, "auth.validate_key", "failure", detail={"reason": "not_found"}, ip_address=client_ip)
