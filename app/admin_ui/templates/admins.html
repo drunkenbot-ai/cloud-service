@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Admin Users - DrunkenBot Admin{% endblock %}
+{% block content %}
+{% if error %}<div class="secret-box" style="background:#fbe4e4; border-color:#e6a3a3;">{{ error }}</div>{% endif %}
+<div class="card">
+  <h2>Create admin user</h2>
+  <form method="post" action="/admin-ui/admins" class="row">
+    <input type="email" name="email" placeholder="colleague@drunkenbot.ai" required>
+    <input type="password" name="password" placeholder="Initial password" required>
+    <select name="role">
+      <option value="readonly">Read-only</option>
+      <option value="full">Full access</option>
+      <option value="superadmin">Superadmin</option>
+    </select>
+    <button type="submit">Create</button>
+  </form>
+  <p class="muted">Read-only can view everything. Full can manage customer accounts/licenses/API keys. Superadmin can also manage other admins.</p>
+</div>
+
+<div class="card">
+  <h2>Admin users</h2>
+  <table>
+    <tr><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th>Last login</th><th></th></tr>
+    {% for admin in admins %}
+    <tr>
+      <td>{{ admin.email }}{% if admin.id == current_admin_id %} <span class="muted">(you)</span>{% endif %}</td>
+      <td>
+        <form method="post" action="/admin-ui/admins/{{ admin.id }}/role" class="inline">
+          <select name="role" onchange="this.form.submit()" {% if admin.id == current_admin_id %}disabled{% endif %}>
+            <option value="readonly" {% if admin.role == "readonly" %}selected{% endif %}>Read-only</option>
+            <option value="full" {% if admin.role == "full" %}selected{% endif %}>Full access</option>
+            <option value="superadmin" {% if admin.role == "superadmin" %}selected{% endif %}>Superadmin</option>
+          </select>
+        </form>
+      </td>
+      <td><span class="pill pill-{{ 'active' if admin.status == 'active' else 'suspended' }}">{{ admin.status }}</span></td>
+      <td class="muted">{{ admin.created_at.strftime("%Y-%m-%d") }}</td>
+      <td class="muted">{{ admin.last_login_at.strftime("%Y-%m-%d %H:%M") if admin.last_login_at else "never" }}</td>
+      <td>
+        {% if admin.id != current_admin_id %}
+        <form method="post" action="/admin-ui/admins/{{ admin.id }}/status" class="inline">
+          {% if admin.status == "active" %}
+          <input type="hidden" name="status" value="disabled">
+          <button type="submit" class="danger">Disable</button>
+          {% else %}
+          <input type="hidden" name="status" value="active">
+          <button type="submit">Enable</button>
+          {% endif %}
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="muted">No admin users yet.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

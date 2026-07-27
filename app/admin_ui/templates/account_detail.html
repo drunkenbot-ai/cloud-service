@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{{ account.email }} - DrunkenBot Admin{% endblock %}
+{% block content %}
+<p><a href="/admin-ui/accounts">&larr; All accounts</a></p>
+
+{% if created_license_key %}<div class="secret-box">New license key: {{ created_license_key }} -- shown once, send it to the customer now.</div>{% endif %}
+{% if created_api_key %}<div class="secret-box">New API key: {{ created_api_key }} -- shown once, send it to the customer now.</div>{% endif %}
+
+<div class="card">
+  <h2>{{ account.email }}</h2>
+  <p class="muted">{{ account.company_name or "No company set" }} &middot; Created {{ account.created_at.strftime("%Y-%m-%d") }} &middot; Status: <span class="pill pill-{{ account.status }}">{{ account.status }}</span></p>
+  <form method="post" action="/admin-ui/accounts/{{ account.id }}/status" class="inline">
+    {% if account.status == "active" %}
+    <input type="hidden" name="status" value="suspended">
+    <button type="submit" class="danger">Suspend account</button>
+    {% else %}
+    <input type="hidden" name="status" value="active">
+    <button type="submit">Reactivate account</button>
+    {% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <h2>Licenses</h2>
+  <form method="post" action="/admin-ui/accounts/{{ account.id }}/licenses" class="row" style="margin-bottom:14px;">
+    <input type="text" name="version_ceiling" placeholder="Version ceiling, e.g. 2.0.0" required>
+    <button type="submit">Issue license</button>
+  </form>
+  <table>
+    <tr><th>Key</th><th>Version ceiling</th><th>Grace until</th><th>Status</th><th>Last validated</th><th></th></tr>
+    {% for license in licenses %}
+    <tr>
+      <td class="muted">{{ license.license_key_prefix }}...</td>
+      <td>{{ license.version_ceiling }}</td>
+      <td class="muted">{{ license.grace_period_until.strftime("%Y-%m-%d") if license.grace_period_until else "-" }}</td>
+      <td><span class="pill pill-{{ license.status }}">{{ license.status }}</span></td>
+      <td class="muted">{{ license.last_validated_at.strftime("%Y-%m-%d %H:%M") if license.last_validated_at else "never" }}</td>
+      <td>
+        {% if license.status == "active" %}
+        <form method="post" action="/admin-ui/licenses/{{ license.id }}/extend" class="inline">
+          <input type="hidden" name="account_id" value="{{ account.id }}">
+          <input type="text" name="version_ceiling" placeholder="New ceiling" style="width:90px;">
+          <button type="submit" class="secondary">Extend</button>
+        </form>
+        <form method="post" action="/admin-ui/licenses/{{ license.id }}/revoke" class="inline">
+          <input type="hidden" name="account_id" value="{{ account.id }}">
+          <button type="submit" class="danger">Revoke</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="muted">No licenses issued yet.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Cloud-training API keys</h2>
+  <form method="post" action="/admin-ui/accounts/{{ account.id }}/api-keys" class="row" style="margin-bottom:14px;">
+    <select name="tier">
+      <option value="free">free</option>
+      <option value="pro">pro</option>
+      <option value="enterprise">enterprise</option>
+    </select>
+    <input type="number" step="0.1" name="quota_gpu_hours_per_month" placeholder="GPU hrs/mo (blank = unlimited)">
+    <button type="submit">Issue API key</button>
+  </form>
+  <table>
+    <tr><th>Prefix</th><th>Tier</th><th>Quota (GPU hrs/mo)</th><th>Status</th><th>Last used</th><th></th></tr>
+    {% for key in api_keys %}
+    <tr>
+      <td class="muted">{{ key.key_prefix }}...</td>
+      <td>{{ key.tier }}</td>
+      <td>{{ key.quota_gpu_hours_per_month if key.quota_gpu_hours_per_month is not none else "unlimited" }}</td>
+      <td><span class="pill pill-{{ key.status }}">{{ key.status }}</span></td>
+      <td class="muted">{{ key.last_used_at.strftime("%Y-%m-%d %H:%M") if key.last_used_at else "never" }}</td>
+      <td>
+        {% if key.status == "active" %}
+        <form method="post" action="/admin-ui/api-keys/{{ key.id }}/revoke" class="inline">
+          <input type="hidden" name="account_id" value="{{ account.id }}">
+          <button type="submit" class="danger">Revoke</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="muted">No API keys issued yet.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Recent launches from this account</h2>
+  <table>
+    <tr><th>When</th><th>OS</th><th>App version</th><th>Machine</th><th>IP</th></tr>
+    {% for launch in launches %}
+    <tr>
+      <td class="muted">{{ launch.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td>{{ launch.os or "-" }} {{ launch.os_version or "" }}</td>
+      <td>{{ launch.app_version }}</td>
+      <td class="muted">{{ launch.machine_id[:12] }}...</td>
+      <td class="muted">{{ launch.ip_address or "-" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">No launches recorded for this account yet.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Audit Log - DrunkenBot Admin{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Audit log</h2>
+  <form method="get" action="/admin-ui/audit-log" class="row" style="margin-bottom:14px;">
+    <input type="text" name="event_type" placeholder="Filter by event type, e.g. license.validate" value="{{ event_type }}">
+    <button type="submit" class="secondary">Filter</button>
+  </form>
+  <table>
+    <tr><th>When</th><th>Event</th><th>Result</th><th>Account</th><th>Subject</th><th>Detail</th><th>IP</th></tr>
+    {% for entry in entries %}
+    <tr>
+      <td class="muted">{{ entry.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+      <td>{{ entry.event_type }}</td>
+      <td><span class="pill pill-{{ entry.result }}">{{ entry.result }}</span></td>
+      <td>{% if entry.account_id %}<a href="/admin-ui/accounts/{{ entry.account_id }}">{{ entry.account_id[:8] }}...</a>{% else %}-{% endif %}</td>
+      <td class="muted">{{ entry.subject_id[:8] ~ "..." if entry.subject_id else "-" }}</td>
+      <td class="muted">{{ entry.detail or "" }}</td>
+      <td class="muted">{{ entry.ip_address or "-" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="muted">No matching audit events.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

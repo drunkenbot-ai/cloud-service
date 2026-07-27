@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - DrunkenBot Admin{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Overview</h2>
+  <div class="row">
+    <div class="card" style="flex:1; text-align:center;"><div style="font-size:28px;">{{ counts.accounts }}</div><div class="muted">Accounts</div></div>
+    <div class="card" style="flex:1; text-align:center;"><div style="font-size:28px;">{{ counts.active_licenses }}</div><div class="muted">Active licenses</div></div>
+    <div class="card" style="flex:1; text-align:center;"><div style="font-size:28px;">{{ counts.active_api_keys }}</div><div class="muted">Active API keys</div></div>
+    <div class="card" style="flex:1; text-align:center;"><div style="font-size:28px;">{{ counts.launches_recorded }}</div><div class="muted">Launches recorded</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Recent audit events</h2>
+  <table>
+    <tr><th>When</th><th>Event</th><th>Result</th><th>Account</th></tr>
+    {% for entry in recent_audit %}
+    <tr>
+      <td class="muted">{{ entry.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td>{{ entry.event_type }}</td>
+      <td><span class="pill pill-{{ entry.result }}">{{ entry.result }}</span></td>
+      <td>{% if entry.account_id %}<a href="/admin-ui/accounts/{{ entry.account_id }}">{{ entry.account_id[:8] }}...</a>{% else %}-{% endif %}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="muted">No audit events yet.</td></tr>
+    {% endfor %}
+  </table>
+  <p><a href="/admin-ui/audit-log">View full audit log &rarr;</a></p>
+</div>
+
+<div class="card">
+  <h2>Recent launches</h2>
+  <table>
+    <tr><th>When</th><th>OS</th><th>App version</th><th>Machine</th><th>IP</th></tr>
+    {% for launch in recent_launches %}
+    <tr>
+      <td class="muted">{{ launch.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td>{{ launch.os or "-" }} {{ launch.os_version or "" }}</td>
+      <td>{{ launch.app_version }}</td>
+      <td class="muted">{{ launch.machine_id[:12] }}...</td>
+      <td class="muted">{{ launch.ip_address or "-" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">No launches recorded yet.</td></tr>
+    {% endfor %}
+  </table>
+  <p><a href="/admin-ui/telemetry">View all telemetry &rarr;</a></p>
+</div>
+{% endblock %}
