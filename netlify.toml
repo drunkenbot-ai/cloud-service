@@ -1,0 +1,3 @@
+[build.environment]
+  # Netlify's automatic Python dependency install uses this runtime.
+  PYTHON_VERSION = "3.12"

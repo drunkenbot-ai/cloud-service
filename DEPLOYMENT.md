@@ -4,6 +4,23 @@ This service has only ever been run locally (SQLite, `uvicorn --reload`, no
 TLS) during development. Nothing here is optional before it serves a real
 LLM-IDE install anywhere outside your own machine.
 
+## Netlify build settings
+
+The repository includes `netlify.toml`, which pins the build image to Python
+3.12. This is required because the pinned `pydantic-core` dependency does not
+provide a wheel for Python 3.14; without the pin, Netlify tries to compile it
+and fails because Rust/Cargo is not installed.
+
+Netlify is suitable for building and hosting a frontend, but this repository
+is a stateful FastAPI service. Do not deploy the API as a static Netlify site:
+it requires a continuously running ASGI process and a persistent Postgres
+database. Use a service that supports Python web processes (for example,
+Render, Railway, Fly.io, or a VM) and configure its start command as:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
 ## 1. Database: switch to Postgres
 
 SQLite is fine for local dev, not for a real deployment (single-writer,
