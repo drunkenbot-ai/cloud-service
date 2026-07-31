@@ -6,6 +6,12 @@ LLM-IDE install anywhere outside your own machine.
 
 ## Netlify build settings
 
+The repository includes `netlify.toml` and `runtime.txt`, which pin supported
+build environments to Python 3.12. This is required because the pinned
+`pydantic-core` dependency does not provide a wheel for Python 3.14; without
+the pin, hosting platforms try to compile it and fail because Rust/Cargo is
+not installed.
+=======
 The repository includes `netlify.toml`, which pins the build image to Python
 3.12. This is required because the pinned `pydantic-core` dependency does not
 provide a wheel for Python 3.14; without the pin, Netlify tries to compile it
