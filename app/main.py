@@ -50,6 +50,27 @@ def root(request: Request) -> object:
     return templates.TemplateResponse(request, "home.html")
 
 
+@app.get("/mission")
+def mission(request: Request) -> object:
+    return templates.TemplateResponse(request, "mission.html")
+
+
+@app.get("/products/{slug}")
+def product(request: Request, slug: str) -> object:
+    products = {
+        "llm-ide": ("DrunkenBot LLM-IDE", "A complete local AI workshop for building, training, testing, and exporting language models.", "One-time purchase"),
+        "gpu-farm": ("GPU Training Farm", "Rent ready-to-use GPU capacity by the hour and run demanding training jobs without buying hardware.", "Pay as you go"),
+        "gpu-farm-management": ("GPU Training Farm Management", "Server and client applications for coordinating your own distributed GPU workers and training jobs.", "One-time purchase"),
+        "ebook-scout": ("eBook Scout", "A free research utility for discovering, downloading, and organizing public-domain books into clean dataset sources.", "Free"),
+        "wikipedia-scout": ("Wikipedia Scout", "Search Wikipedia by topic, filter pages by size and word count, and build focused datasets from selected articles.", "Free"),
+    }
+    if slug not in products:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Product not found")
+    title, description, pricing = products[slug]
+    return templates.TemplateResponse(request, "product.html", {"product": {"slug": slug, "title": title, "description": description, "pricing": pricing}})
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     """Basic liveness check.
