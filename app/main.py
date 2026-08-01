@@ -9,8 +9,10 @@ any real deployment -- this app itself speaks plain HTTP only.
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 from fastapi import FastAPI, Request
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -28,6 +30,8 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+
+ORGANIZATION_JSON = json.dumps({"@context": "https://schema.org", "@type": "Organization", "name": "DrunkenBot AI", "url": "https://drunkenbot.ai"})
 app.add_middleware(SessionMiddleware, secret_key=get_settings().session_secret_key, same_site="lax")
 
 app.include_router(license.router)
@@ -47,12 +51,12 @@ def on_startup() -> None:
 def root(request: Request) -> object:
     """Render the public service landing page."""
 
-    return templates.TemplateResponse(request, "home.html")
+    return templates.TemplateResponse(request, "home.html", {"meta_description": "DrunkenBot AI builds practical tools for private AI data preparation, model training, and deployment.", "organization_json": ORGANIZATION_JSON})
 
 
 @app.get("/mission")
 def mission(request: Request) -> object:
-    return templates.TemplateResponse(request, "mission.html")
+    return templates.TemplateResponse(request, "mission.html", {"meta_description": "Learn how DrunkenBot AI helps teams build practical, private AI systems.", "organization_json": ORGANIZATION_JSON})
 
 
 @app.get("/products/{slug}")
@@ -68,7 +72,20 @@ def product(request: Request, slug: str) -> object:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Product not found")
     title, description, pricing = products[slug]
-    return templates.TemplateResponse(request, "product.html", {"product": {"slug": slug, "title": title, "description": description, "pricing": pricing}})
+    product_data = {"slug": slug, "title": title, "description": description, "pricing": pricing}
+    structured = {"@context": "https://schema.org", "@type": "SoftwareApplication", "name": title, "description": description, "applicationCategory": "DeveloperApplication", "operatingSystem": "Windows, macOS, Linux"}
+    return templates.TemplateResponse(request, "product.html", {"product": product_data, "meta_description": description, "organization_json": json.dumps(structured)})
+
+
+@app.get("/robots.txt")
+def robots() -> object:
+    return Response("User-agent: *\nAllow: /\nDisallow: /admin-ui/\nDisallow: /admin/\nSitemap: https://drunkenbot.ai/sitemap.xml\n", media_type="text/plain")
+
+
+@app.get("/sitemap.xml")
+def sitemap() -> object:
+    urls = ["", "mission", "products/llm-ide", "products/gpu-farm", "products/gpu-farm-management", "products/ebook-scout", "products/wikipedia-scout"]
+    return Response("<?xml version=\"1.0\" encoding=\"UTF-8\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">" + "".join(f"<url><loc>https://drunkenbot.ai/{path}</loc></url>" for path in urls) + "</urlset>", media_type="application/xml")
 
 
 @app.get("/health")
