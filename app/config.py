@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     notification_encryption_key: str
     grace_receipt_valid_hours: int = 168
     rate_limit_per_minute: int = 30
+    geolocation_enabled: bool = True
+    geolocation_api_url: str = "https://ipapi.co/{ip}/json/"
+    geolocation_timeout_seconds: float = 1.5
 
 
 @lru_cache

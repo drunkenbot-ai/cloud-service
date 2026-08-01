@@ -196,12 +196,8 @@ class LaunchEvent(Base):
     (validation attempts and admin actions). Mixing them would make the
     audit log noisy and slow to query for its actual purpose.
 
-    ``ip_country``/``isp`` are left nullable and unpopulated by the
-    validation endpoint itself -- resolving IP geolocation synchronously on
-    every license check would add a third-party network dependency to the
-    single most latency- and reliability-sensitive endpoint in the service.
-    Enrich these later via a batch job reading raw ``ip_address`` values
-    instead.
+    Geolocation fields are nullable because local/private addresses and
+    provider outages cannot be resolved.
     """
 
     __tablename__ = "launch_events"
@@ -214,6 +210,7 @@ class LaunchEvent(Base):
     os_version: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     app_version: Mapped[str] = mapped_column(String(50))
     ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
+    ip_city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     ip_country: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     isp: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now, index=True)
