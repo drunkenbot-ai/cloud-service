@@ -381,6 +381,9 @@ def record_launch_event(
     os: Optional[str] = None,
     os_version: Optional[str] = None,
     ip_address: Optional[str] = None,
+    ip_city: Optional[str] = None,
+    ip_country: Optional[str] = None,
+    isp: Optional[str] = None,
 ) -> None:
     """Record one launch telemetry event.
 
@@ -404,6 +407,9 @@ def record_launch_event(
             os_version=os_version,
             app_version=app_version,
             ip_address=ip_address,
+            ip_city=ip_city,
+            ip_country=ip_country,
+            isp=isp,
         )
     )
     db.commit()

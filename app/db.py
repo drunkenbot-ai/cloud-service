@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Iterator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import get_settings
@@ -41,6 +41,10 @@ def init_db() -> None:
     from app import models  # noqa: F401 -- ensures models are registered on Base
 
     Base.metadata.create_all(bind=_engine)
+    columns = {column["name"] for column in inspect(_engine).get_columns("launch_events")}
+    if "ip_city" not in columns:
+        with _engine.begin() as connection:
+            connection.execute(text("ALTER TABLE launch_events ADD COLUMN ip_city VARCHAR(100)"))
 
 
 def get_db() -> Iterator[Session]:
