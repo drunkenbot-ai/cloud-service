@@ -16,6 +16,7 @@ from app.rate_limit import enforce_rate_limit
 from app.schemas import LicenseValidateRequest, LicenseValidateResponse
 from app.security import sign_payload
 from app.versioning import is_version_within_ceiling
+from app.geolocation import lookup
 
 router = APIRouter(prefix="/license", tags=["license"])
 
@@ -42,7 +43,13 @@ def validate_license(
         Validation result, with a signed grace receipt when valid.
     """
 
-    client_ip = request.client.host if request.client else None
+    client_ip = request.headers.get("CF-Connecting-IP")
+    if not client_ip:
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        client_ip = forwarded_for.split(",")[0].strip() if forwarded_for else None
+    if not client_ip:
+        client_ip = request.client.host if request.client else None
+    location = lookup(client_ip)
     license_row = crud.get_license_by_key(db, payload.license_key)
 
     if payload.telemetry is not None:
@@ -55,6 +62,9 @@ def validate_license(
             os=payload.telemetry.os,
             os_version=payload.telemetry.os_version,
             ip_address=client_ip,
+            ip_city=location["city"],
+            ip_country=location["country"],
+            isp=location["isp"],
         )
 
     if license_row is None:
