@@ -1,7 +1,7 @@
 {% extends "site_base.html" %}
 {% block title %}{{ product.title }} | DrunkenBot AI{% endblock %}
 {% block content %}
-<section class="product-hero"><div><p class="eyebrow">{{ product.pricing }}</p><h1>{{ product.title }}</h1><p class="lead">{{ product.description }}</p>
+<section class="product-hero product-page product-{{ product.slug }}"><div><p class="eyebrow">{{ product.pricing }}</p><h1>{{ product.title }}</h1><p class="lead">{{ product.description }}</p>
 {% if product.pricing == "One-time purchase" %}<a class="button primary" href="/products/{{ product.slug }}/buy">Buy - coming soon</a>{% endif %}</div>
 <img class="product-art" src="/static/{{ product.slug }}.png" alt="{{ product.title }}"></section>
 {% if product.slug == "llm-ide" %}<section class="details"><h2>See the workshop in motion</h2><div class="ide-slider"><figure class="ide-slide"><img src="/static/llm-ide.png" alt="LLM-IDE workspace overview"><figcaption>One focused workspace from dataset planning to export.</figcaption></figure><figure class="ide-slide"><img src="/static/gpu-farm-management.png" alt="Distributed training management"><figcaption>Coordinate local and remote GPU workers without leaving the workflow.</figcaption></figure><figure class="ide-slide"><img src="/static/gpu-farm.png" alt="GPU training capacity"><figcaption>Move demanding runs to elastic GPU capacity when you need it.</figcaption></figure></div></section>{% endif %}
