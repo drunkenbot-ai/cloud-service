@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DrunkenBot</title>
+  <style>
+    :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #f5f7fb; background: #080b12; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 50% -10%, #263b75 0, #080b12 52%); }
+    .shell { width: min(1120px, 100% - 40px); margin: auto; padding: 28px 0 70px; }
+    nav { display:flex; align-items:center; justify-content:space-between; }
+    .brand { font-weight:800; letter-spacing:-.02em; font-size:20px; }
+    nav .links { display:flex; gap:28px; }
+    nav a { color:#b8c2d7; text-decoration:none; font-size:14px; }
+    nav a:hover { color:#fff; }
+    .hero { text-align:center; padding:120px 0 90px; }
+    .eyebrow { color:#76d4ff; text-transform:uppercase; letter-spacing:.16em; font-size:12px; font-weight:700; }
+    h1 { font-size:clamp(48px, 8vw, 88px); line-height:.96; margin:18px 0 24px; letter-spacing:-.07em; }
+    .hero p { max-width:650px; margin:auto; color:#aeb8ca; font-size:19px; line-height:1.6; }
+    .button { display:inline-block; margin-top:30px; padding:13px 22px; border-radius:10px; background:#735cff; color:white; text-decoration:none; font-weight:700; }
+    .cards { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
+    .card { padding:26px; border:1px solid #27334d; border-radius:18px; background:rgba(18,25,42,.88); }
+    h2 { margin:0 0 10px; font-size:21px; }
+    .card p { color:#aeb8ca; line-height:1.6; font-size:14px; }
+    @media (max-width:700px) { nav .links { gap:12px; } .cards { grid-template-columns:1fr; } .hero { padding-top:80px; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav>
+      <div class="brand">DrunkenBot</div>
+      <div class="links">
+        <a href="#products">Products</a>
+        <a href="#about">About Us</a>
+        <a href="/download">Downloads</a>
+      </div>
+    </nav>
+    <section class="hero">
+      <div class="eyebrow">Local AI development tools</div>
+      <h1>Build, train, and run locally.</h1>
+      <p>DrunkenBot creates focused tools for developers who want practical control over their AI workflows and data.</p>
+      <a class="button" href="/download">Download DrunkenBot-IDE</a>
+    </section>
+    <section class="cards">
+      <article class="card" id="products"><h2>Products</h2><p>DrunkenBot-IDE helps you prepare datasets, train language models, and run them locally.</p></article>
+      <article class="card" id="about"><h2>About Us</h2><p>We build accessible, developer-first tools for experimenting with and understanding local AI.</p></article>
+      <article class="card"><h2>Latest release</h2><p>Download the current Windows, macOS, or Linux installer from GitHub Releases.</p><a class="button" href="/download">View downloads</a></article>
+    </section>
+  </div>
+</body>
+</html>

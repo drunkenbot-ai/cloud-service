@@ -8,7 +8,10 @@ any real deployment -- this app itself speaks plain HTTP only.
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from pathlib import Path
+
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.admin_ui.router import router as admin_ui_router
@@ -30,6 +33,7 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(admin_ui_router)
 app.include_router(download_router)
+templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
 
 @app.on_event("startup")
@@ -40,18 +44,9 @@ def on_startup() -> None:
 
 
 @app.get("/")
-def root() -> dict[str, str]:
-    """Basic status/landing response for anyone hitting the bare host.
-
-    Returns:
-        Status payload pointing at the docs and health check.
-    """
-
-    return {
-        "message": "DrunkenBot Cloud Service API is running",
-        "docs": "/docs",
-        "health": "/health",
-    }
+def root(request: Request):
+    """Render the public DrunkenBot landing page."""
+    return templates.TemplateResponse(request=request, name="home.html")
 
 
 @app.get("/health")
