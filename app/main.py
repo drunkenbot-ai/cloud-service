@@ -13,6 +13,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.admin_ui.router import router as admin_ui_router
 from app.config import get_settings
+from app.download_page import router as download_router
 from app.db import init_db
 from app.routers import admin, auth, license
 
@@ -28,6 +29,7 @@ app.include_router(license.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(admin_ui_router)
+app.include_router(download_router)
 
 
 @app.on_event("startup")
