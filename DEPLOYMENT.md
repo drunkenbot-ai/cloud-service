@@ -25,10 +25,15 @@ no real concurrent access). Provision a Postgres instance and point
 DATABASE_URL=postgresql+psycopg://user:password@host:5432/drunkenbot
 ```
 
-Tables are still created via `init_db()` (`create_all`, no migrations yet
--- see the README's deferred-items list). Run the app once against the new
-database to create the schema, then run `scripts/create_first_admin.py`
-against it to bootstrap your first admin.
+Apply the versioned schema before starting the application:
+
+```bash
+python -m alembic upgrade head
+```
+
+`init_db()` remains a local-development fallback only. Then run
+`scripts/create_first_admin.py` against the database to bootstrap your first
+admin.
 
 ## 2. TLS: put a reverse proxy in front
 

@@ -32,10 +32,9 @@ SessionLocal = sessionmaker(bind=_engine, autoflush=False, autocommit=False)
 def init_db() -> None:
     """Create all tables that do not already exist.
 
-    This is a deliberate v1 simplification: schema changes are applied by
-    editing the models and re-running this, not through migrations. Add
-    Alembic before making breaking schema changes against a database that
-    already holds real customer data.
+    This is retained as a local-development and test fallback. Production
+    deployments must apply the Alembic revision chain before starting the
+    service; ``create_all`` cannot safely evolve an existing schema.
     """
 
     from app import models  # noqa: F401 -- ensures models are registered on Base
