@@ -74,6 +74,20 @@ class GpuUsageReportResponse(BaseModel):
     gpu_hours_remaining: Optional[float] = None
 
 
+class GpuUsageReservationRequest(BaseModel):
+    """GPU-hour estimate to hold before dispatching one cloud job."""
+
+    job_id: str = Field(min_length=1, max_length=100)
+    gpu_hours: float = Field(gt=0, le=100000)
+    gpu_count: int = Field(default=1, ge=1, le=128)
+
+
+class GpuUsageReservationResponse(BaseModel):
+    accepted: bool
+    reason: Optional[str] = None
+    gpu_hours_remaining: Optional[float] = None
+
+
 class AccountCreateRequest(BaseModel):
     """Admin request to create a new account."""
 
