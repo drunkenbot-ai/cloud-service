@@ -118,6 +118,24 @@ class ApiKey(Base):
     account: Mapped["Account"] = relationship(back_populates="api_keys")
 
 
+class GpuUsageRecord(Base):
+    """Idempotent cloud-farm GPU-hour debit reported by a Farm Manager."""
+
+    __tablename__ = "gpu_usage_records"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    # The manager's globally unique job id is the idempotency key: retries do
+    # not double-charge after a timeout or lost response.
+    job_id: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    account_id: Mapped[str] = mapped_column(ForeignKey("accounts.id"), index=True)
+    api_key_id: Mapped[str] = mapped_column(ForeignKey("api_keys.id"), index=True)
+    gpu_hours: Mapped[float] = mapped_column(Float)
+    gpu_count: Mapped[int] = mapped_column(default=1)
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    reported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now, index=True)
+
+
 class NotificationSettings(Base):
     """Singleton row holding alert-channel configuration.
 
