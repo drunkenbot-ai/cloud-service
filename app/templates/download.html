@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Download DrunkenBot-IDE</title>
+  <style>
+    :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #f5f7fb; background: #080b12; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 50% -10%, #263b75 0, #080b12 52%); }
+    .shell { width: min(1080px, 100% - 40px); margin: auto; padding: 28px 0 64px; }
+    nav { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.02em; }
+    .brand-mark { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: linear-gradient(135deg, #7c5cff, #2fc5ff); font-size: 19px; }
+    nav a { color: #b8c2d7; text-decoration: none; font-size: 14px; }
+    .hero { text-align: center; padding: 100px 0 58px; }
+    .eyebrow { color: #76d4ff; text-transform: uppercase; letter-spacing: .16em; font-size: 12px; font-weight: 700; }
+    h1 { font-size: clamp(42px, 7vw, 76px); line-height: .98; margin: 16px 0 22px; letter-spacing: -.06em; }
+    .hero p { color: #aeb8ca; max-width: 650px; margin: auto; font-size: 18px; line-height: 1.6; }
+    .downloads { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { padding: 24px; border: 1px solid #27334d; border-radius: 18px; background: rgba(18, 25, 42, .88); box-shadow: 0 16px 50px rgba(0,0,0,.2); }
+    .platform-icon { width: 58px; height: 58px; border-radius: 16px; display: grid; place-items: center; background: #202c49; color: #79d8ff; font-size: 30px; margin-bottom: 22px; }
+    h2 { margin: 0 0 8px; font-size: 22px; }
+    .label, .format { color: #aeb8ca; font-size: 14px; }
+    .download { display: block; text-align: center; margin-top: 24px; padding: 12px 16px; border-radius: 10px; background: #735cff; color: white; text-decoration: none; font-weight: 700; }
+    .download:hover { background: #8c79ff; }
+    .note { text-align: center; color: #7f8ba2; margin-top: 34px; font-size: 13px; }
+    @media (max-width: 760px) { .downloads { grid-template-columns: 1fr; } .hero { padding-top: 70px; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav>
+      <div class="brand"><span class="brand-mark">✦</span>DrunkenBot-IDE</div>
+      <a href="{{ releases_url }}">Release notes</a>
+    </nav>
+    <section class="hero">
+      <div class="eyebrow">Build locally. Train freely.</div>
+      <h1>Download DrunkenBot-IDE</h1>
+      <p>A focused desktop environment for preparing datasets, training language models, and running them locally.</p>
+    </section>
+    <section class="downloads" aria-label="Downloads">
+      {% for item in downloads %}
+      <article class="card">
+        <div class="platform-icon" aria-hidden="true">{% if item.icon == "apple" %}●{% elif item.icon == "linux" %}◈{% else %}⊞{% endif %}</div>
+        <h2>{{ item.name }}</h2>
+        <div class="label">{{ item.label }}</div>
+        <div class="format">{{ item.format }}</div>
+        <a class="download" href="{{ item.url }}">Download for {{ item.name }}</a>
+      </article>
+      {% endfor %}
+    </section>
+    <p class="note">Downloads are served from GitHub Releases. The links always point to the latest published version.</p>
+  </div>
+</body>
+</html>
