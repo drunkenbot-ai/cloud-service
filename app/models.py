@@ -136,6 +136,23 @@ class GpuUsageRecord(Base):
     reported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now, index=True)
 
 
+class GpuUsageReservation(Base):
+    """A pre-dispatch GPU-hour hold, keyed idempotently by farm job id."""
+
+    __tablename__ = "gpu_usage_reservations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    job_id: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    account_id: Mapped[str] = mapped_column(ForeignKey("accounts.id"), index=True)
+    api_key_id: Mapped[str] = mapped_column(ForeignKey("api_keys.id"), index=True)
+    gpu_hours: Mapped[float] = mapped_column(Float)
+    gpu_count: Mapped[int] = mapped_column(default=1)
+    # active reservations reduce dispatchable quota; released and settled ones do not.
+    status: Mapped[str] = mapped_column(String(20), default="active", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now, index=True)
+    released_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class NotificationSettings(Base):
     """Singleton row holding alert-channel configuration.
 
