@@ -9,4 +9,3 @@ keys/
 *.sqlite3
 .DS_Store
 *.idea
-*.db
