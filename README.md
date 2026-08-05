@@ -167,9 +167,14 @@ works for local dev without Postgres installed — see `app/db.py`).
 uvicorn app.main:app --reload --port 8000
 ```
 
-Tables are created automatically on startup (see `app/db.py` — this is a v1
-simplification; add Alembic migrations before making breaking schema
-changes against a database holding real customer data).
+For production, apply versioned schema changes before starting the service:
+
+```bash
+python -m alembic upgrade head
+```
+
+Tables are still created automatically on startup only as a local-development
+and test fallback (see `app/db.py`).
 
 Interactive API docs: `http://localhost:8000/docs`
 Admin web UI: `http://localhost:8000/admin-ui/`
@@ -220,7 +225,6 @@ or `curl -X POST` with a JSON body to test them.
   API does not yet)
 - IP-based ISP/geolocation enrichment (raw IP is captured; resolving it is
   deferred to an async/batch job, not the validation hot path)
-- Alembic migrations
 - Distributed rate limiting (current limiter is in-process memory; fine for
   one instance, needs a shared store like Redis if this is ever
   horizontally scaled)
