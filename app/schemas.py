@@ -58,6 +58,22 @@ class ApiKeyValidateResponse(BaseModel):
     quota_gpu_hours_per_month: Optional[float] = None
 
 
+class GpuUsageReportRequest(BaseModel):
+    """One completed cloud training job reported by a Farm Manager."""
+
+    job_id: str = Field(min_length=1, max_length=100)
+    gpu_hours: float = Field(ge=0, le=100000)
+    gpu_count: int = Field(default=1, ge=1, le=128)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+
+
+class GpuUsageReportResponse(BaseModel):
+    accepted: bool
+    reason: Optional[str] = None
+    gpu_hours_remaining: Optional[float] = None
+
+
 class AccountCreateRequest(BaseModel):
     """Admin request to create a new account."""
 
